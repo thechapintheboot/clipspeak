@@ -13,7 +13,22 @@ ClipSpeak is a lightweight Linux utility that speaks the text currently in your 
 
 ## Installation
 
-### Prerequisites
+### Method 1: Easy Installation (.deb package) - Recommended
+
+The easiest way to install ClipSpeak is using the pre-built `.deb` package, which **includes high-quality voices** and handles dependencies automatically.
+
+1.  Go to the **[Releases Page](https://github.com/thechapintheboot/clipspeak/releases)**.
+2.  Download the latest `clipspeak-x.x.deb` file.
+3.  Double-click the file to install it (or run `sudo dpkg -i clipspeak-x.x.deb`).
+4.  Launch "ClipSpeak" from your applications menu.
+
+---
+
+### Method 2: Manual Installation (For Developers)
+
+If you prefer to run from source:
+
+#### Prerequisites
 
 Ensure you have Python 3 and the necessary system libraries:
 
