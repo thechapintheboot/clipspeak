@@ -49,22 +49,17 @@ cp clipspeak.desktop "$APPS_DIR/clipspeak.desktop"
 cp requirements.txt "$USR_SHARE/requirements.txt"
 
 # Locate and Copy Piper Executable (Engine)
-# We assume 'piper' is in the path or we look for it.
-PIPER_BIN=$(which piper)
-if [ -z "$PIPER_BIN" ]; then
-    # Try looking in local bin if not in path (common with pip install --user)
-    if [ -f "$HOME/.local/bin/piper" ]; then
-        PIPER_BIN="$HOME/.local/bin/piper"
-    fi
-fi
+# Explicitly use the piper from the venv that the project was developed in.
+PIPER_BIN="/home/paolo/ProgettiGemini/clipspeak/venv/bin/piper"
 
-if [ -n "$PIPER_BIN" ] && [ -x "$PIPER_BIN" ]; then
+if [ -f "$PIPER_BIN" ] && [ -x "$PIPER_BIN" ]; then
     echo "Found Piper executable at: $PIPER_BIN. Copying to package..."
     cp "$PIPER_BIN" "$USR_SHARE/piper"
     chmod +x "$USR_SHARE/piper"
 else
-    echo "WARNING: Piper executable NOT FOUND! The package will miss the TTS engine."
-    echo "Please ensure 'piper' is installed and in your PATH (or ~/.local/bin)."
+    echo "ERROR: Piper executable NOT FOUND at expected venv path: $PIPER_BIN."
+    echo "The package WILL NOT contain the TTS engine. Please verify the path or install piper."
+    exit 1 # Exit with an error if piper is not found, as it's critical.
 fi
 
 # Copy Voices
