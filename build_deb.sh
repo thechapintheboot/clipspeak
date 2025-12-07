@@ -6,7 +6,7 @@ VERSION="1.1"
 ARCH="all"
 MAINTAINER="Paolo <thechapintheboot@gmail.com>"
 DESCRIPTION="Instant text-to-speech from your clipboard using Piper TTS (Voices Included)."
-DEPENDENCIES="python3, python3-gi, python3-gi-cairo, gir1.2-appindicator3-0.1, espeak-ng, libportaudio2, alsa-utils"
+DEPENDENCIES="python3, python3-gi, python3-gi-cairo, gir1.2-appindicator3-0.1, espeak-ng, libportaudio2, alsa-utils, python3-langdetect"
 
 # Directories
 BUILD_DIR="build"
@@ -47,6 +47,25 @@ cp clipspeak.py "$USR_SHARE/clipspeak.py"
 cp clipspeak.svg "$ICONS_DIR/clipspeak.svg"
 cp clipspeak.desktop "$APPS_DIR/clipspeak.desktop"
 cp requirements.txt "$USR_SHARE/requirements.txt"
+
+# Locate and Copy Piper Executable (Engine)
+# We assume 'piper' is in the path or we look for it.
+PIPER_BIN=$(which piper)
+if [ -z "$PIPER_BIN" ]; then
+    # Try looking in local bin if not in path (common with pip install --user)
+    if [ -f "$HOME/.local/bin/piper" ]; then
+        PIPER_BIN="$HOME/.local/bin/piper"
+    fi
+fi
+
+if [ -n "$PIPER_BIN" ] && [ -x "$PIPER_BIN" ]; then
+    echo "Found Piper executable at: $PIPER_BIN. Copying to package..."
+    cp "$PIPER_BIN" "$USR_SHARE/piper"
+    chmod +x "$USR_SHARE/piper"
+else
+    echo "WARNING: Piper executable NOT FOUND! The package will miss the TTS engine."
+    echo "Please ensure 'piper' is installed and in your PATH (or ~/.local/bin)."
+fi
 
 # Copy Voices
 echo "Copying voices from $SOURCE_VOICES_DIR to package..."
