@@ -1,0 +1,17 @@
+venv/
+__pycache__/
+*.pyc
+build/
+*.deb
+*.spec
+.vscode/
+.idea/
+*.log
+*.sock
+backup/
+# Escludiamo file di appunti personali se non vuoi pubblicarli
+mission_briefing.md
+Progetto.md
+Imp_config.md
+fonte_icona.md
+er.png

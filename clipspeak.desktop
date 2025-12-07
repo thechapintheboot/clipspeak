@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=ClipSpeak
+Comment=Speak text from clipboard
+Exec=/usr/bin/clipspeak
+Icon=clipspeak
+Terminal=false
+Type=Application
+Categories=Utility;Accessibility;
