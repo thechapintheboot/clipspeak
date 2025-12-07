@@ -24,13 +24,32 @@ if not PIPER_EXE:
     if os.access(local_piper, os.X_OK):
         PIPER_EXE = local_piper
 
-VOICE_DIR         = os.path.expanduser("~/.local/share/piper-voices")
+USER_VOICE_DIR = os.path.expanduser("~/.local/share/piper-voices")
+SYSTEM_VOICE_DIR = "/usr/share/clipspeak/voices"
+
 APP_CONFIG_DIR    = os.path.expanduser("~/.config/clipspeak")
 SPEED_CONFIG_FILE = os.path.join(APP_CONFIG_DIR, "speed.conf")
 MODELS_CONFIG_FILE = os.path.join(APP_CONFIG_DIR, "models.json")
 SOCKET_FILE       = os.path.join(os.getenv('XDG_RUNTIME_DIR', '/tmp'), 'clipspeak.sock')
 
 speaking_lock = threading.Lock()
+
+# ---------- Helper Ricerca Voci ----------
+def get_model_paths(model_file, config_file):
+    # 1. Cerca nella cartella utente (priorità alta per personalizzazioni)
+    m_path = os.path.join(USER_VOICE_DIR, model_file)
+    c_path = os.path.join(USER_VOICE_DIR, config_file)
+    if os.path.exists(m_path) and os.path.exists(c_path):
+        return m_path, c_path
+    
+    # 2. Cerca nella cartella di sistema (installazione .deb)
+    m_path = os.path.join(SYSTEM_VOICE_DIR, model_file)
+    c_path = os.path.join(SYSTEM_VOICE_DIR, config_file)
+    if os.path.exists(m_path) and os.path.exists(c_path):
+        return m_path, c_path
+        
+    # 3. Non trovato
+    return None, None
 
 # ---------- Notifiche ----------
 Notify.init("ClipSpeak-TTS")
@@ -152,11 +171,11 @@ def speak(text):
             lang = 'en'
 
         model, config = MODELS[lang]
-        model_path = os.path.join(VOICE_DIR, model)
-        config_path = os.path.join(VOICE_DIR, config)
+        
+        model_path, config_path = get_model_paths(model, config)
 
-        if not os.path.exists(model_path):
-            GLib.idle_add(show_error, f"Missing model: {lang}", f"File not found in {VOICE_DIR}")
+        if not model_path:
+            GLib.idle_add(show_error, f"Missing model: {lang}", f"Voice files ({model}) not found in {USER_VOICE_DIR} or {SYSTEM_VOICE_DIR}")
             return
 
         proc = subprocess.run(
