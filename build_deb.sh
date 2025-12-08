@@ -48,16 +48,17 @@ cp clipspeak.svg "$ICONS_DIR/clipspeak.svg"
 cp clipspeak.desktop "$APPS_DIR/clipspeak.desktop"
 cp requirements.txt "$USR_SHARE/requirements.txt"
 
-# Locate and Copy Piper Executable (Engine)
-# Explicitly use the standalone downloaded binary in bin/piper
-PIPER_BIN="bin/piper"
+# Locate and Copy Piper Engine (Binary + Libs)
+PIPER_SRC_DIR="bin"
+PIPER_DEST_DIR="$USR_SHARE/piper_engine"
 
-if [ -f "$PIPER_BIN" ] && [ -x "$PIPER_BIN" ]; then
-    echo "Found Piper executable at: $PIPER_BIN. Copying to package..."
-    cp "$PIPER_BIN" "$USR_SHARE/piper"
-    chmod +x "$USR_SHARE/piper"
+if [ -f "$PIPER_SRC_DIR/piper" ]; then
+    echo "Found Piper engine in: $PIPER_SRC_DIR. Copying full engine to package..."
+    mkdir -p "$PIPER_DEST_DIR"
+    cp -r "$PIPER_SRC_DIR/"* "$PIPER_DEST_DIR/"
+    chmod +x "$PIPER_DEST_DIR/piper"
 else
-    echo "ERROR: Piper executable NOT FOUND at expected path: $PIPER_BIN."
+    echo "ERROR: Piper executable NOT FOUND at expected path: $PIPER_SRC_DIR/piper."
     echo "The package WILL NOT contain the TTS engine. Please run the download command first."
     exit 1 
 fi

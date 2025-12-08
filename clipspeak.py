@@ -20,8 +20,8 @@ def find_executable(name):
 PIPER_EXE = find_executable("piper")
 # Fallback se non è nel path, magari è nella stessa cartella dello script (per versioni portable o .deb)
 if not PIPER_EXE:
-    # Cerca nella stessa directory dello script (dove il .deb lo installa: /usr/share/clipspeak/piper)
-    local_piper = os.path.join(os.path.dirname(os.path.abspath(__file__)), "piper")
+    # Cerca nella sottocartella piper_engine (dove il .deb lo installa: /usr/share/clipspeak/piper_engine/piper)
+    local_piper = os.path.join(os.path.dirname(os.path.abspath(__file__)), "piper_engine", "piper")
     if os.access(local_piper, os.X_OK):
         PIPER_EXE = local_piper
 
