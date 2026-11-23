@@ -1,8 +1,11 @@
 [Desktop Entry]
+Type=Application
 Name=ClipSpeak
-Comment=Speak text from clipboard
-Exec=/usr/bin/clipspeak
+Comment=Read the clipboard aloud with natural voices
+Comment[it]=Legge ad alta voce il testo copiato con voci naturali
+Exec=clipspeak
 Icon=clipspeak
 Terminal=false
-Type=Application
 Categories=Utility;Accessibility;
+Keywords=tts;speech;voice;clipboard;read;
+Keywords[it]=tts;sintesi vocale;voce;appunti;leggi;

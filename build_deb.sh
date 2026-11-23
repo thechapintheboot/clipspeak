@@ -1,90 +1,47 @@
 #!/bin/bash
+# Builds a small, architecture-independent .deb package of ClipSpeak.
+# Usage: ./build_deb.sh   ->   build/clipspeak_<version>_all.deb
+set -euo pipefail
+cd "$(dirname "$0")"
 
-# Configuration
-APP_NAME="clipspeak"
-VERSION="1.1"
-ARCH="all"
-MAINTAINER="Paolo <thechapintheboot@gmail.com>"
-DESCRIPTION="Instant text-to-speech from your clipboard using Piper TTS (Voices Included)."
-DEPENDENCIES="python3, python3-gi, python3-gi-cairo, gir1.2-appindicator3-0.1, espeak-ng, libportaudio2, alsa-utils, python3-langdetect"
+APP=clipspeak
+VERSION=$(sed -n 's/^VERSION = "\(.*\)"$/\1/p' clipspeak.py)
+MAINTAINER="thechapintheboot <226202320+thechapintheboot@users.noreply.github.com>"
+DEPENDS="python3 (>= 3.9), python3-gi, gir1.2-gtk-3.0, gir1.2-ayatanaappindicator3-0.1 | gir1.2-appindicator3-0.1, gir1.2-notify-0.7, pulseaudio-utils | pipewire-bin | alsa-utils"
 
-# Directories
-BUILD_DIR="build"
-DEB_DIR="$BUILD_DIR/$APP_NAME-$VERSION"
-DEBIAN_DIR="$DEB_DIR/DEBIAN"
-USR_BIN="$DEB_DIR/usr/bin"
-USR_SHARE="$DEB_DIR/usr/share/$APP_NAME"
-VOICES_DIR="$USR_SHARE/voices"
-APPS_DIR="$DEB_DIR/usr/share/applications"
-ICONS_DIR="$DEB_DIR/usr/share/icons/hicolor/scalable/apps"
+ROOT="build/$APP-$VERSION"
+rm -rf build
+install -d "$ROOT/DEBIAN" "$ROOT/usr/bin" "$ROOT/usr/share/$APP" \
+    "$ROOT/usr/share/applications" "$ROOT/usr/share/icons/hicolor/scalable/apps" \
+    "$ROOT/usr/share/doc/$APP"
 
-# Source of voices (Your local collection)
-SOURCE_VOICES_DIR="$HOME/.local/share/piper-voices"
+install -m 755 clipspeak.py "$ROOT/usr/share/$APP/clipspeak.py"
+install -m 644 clipspeak.desktop "$ROOT/usr/share/applications/clipspeak.desktop"
+install -m 644 clipspeak.svg "$ROOT/usr/share/icons/hicolor/scalable/apps/clipspeak.svg"
+install -m 644 LICENSE "$ROOT/usr/share/doc/$APP/copyright"
 
-# Clean previous build
-rm -rf "$BUILD_DIR"
-mkdir -p "$DEBIAN_DIR" "$USR_BIN" "$USR_SHARE" "$VOICES_DIR" "$APPS_DIR" "$ICONS_DIR"
+cat > "$ROOT/usr/bin/$APP" <<'EOF'
+#!/bin/sh
+exec python3 /usr/share/clipspeak/clipspeak.py "$@"
+EOF
+chmod 755 "$ROOT/usr/bin/$APP"
 
-# Create Control File
-cat > "$DEBIAN_DIR/control" <<EOF
-Package: $APP_NAME
+cat > "$ROOT/DEBIAN/control" <<EOF
+Package: $APP
 Version: $VERSION
 Section: utils
 Priority: optional
-Architecture: $ARCH
+Architecture: all
 Maintainer: $MAINTAINER
-Depends: $DEPENDENCIES
-Description: $DESCRIPTION
- ClipSpeak sits in the system tray and speaks the clipboard content
- using high-quality Piper TTS voices.
- .
- This package includes the standard set of Piper voices (Medium quality)
- for EN, IT, FR, DE, ES, etc.
+Depends: $DEPENDS
+Installed-Size: $(du -sk "$ROOT/usr" | cut -f1)
+Homepage: https://github.com/thechapintheboot/clipspeak
+Description: Reads the clipboard aloud with natural AI voices
+ ClipSpeak sits in the system tray and reads the copied (or selected) text
+ aloud with Google's Gemini 3.8 Flash TTS through OpenRouter: 30 voices,
+ automatic language detection, adjustable speed, pitch and style.
+ An OpenRouter API key is required.
 EOF
 
-# Copy Files
-cp clipspeak.py "$USR_SHARE/clipspeak.py"
-cp clipspeak.svg "$ICONS_DIR/clipspeak.svg"
-cp clipspeak.desktop "$APPS_DIR/clipspeak.desktop"
-cp requirements.txt "$USR_SHARE/requirements.txt"
-
-# Locate and Copy Piper Engine (Binary + Libs)
-PIPER_SRC_DIR="bin"
-PIPER_DEST_DIR="$USR_SHARE/piper_engine"
-
-if [ -f "$PIPER_SRC_DIR/piper" ]; then
-    echo "Found Piper engine in: $PIPER_SRC_DIR. Copying full engine to package..."
-    mkdir -p "$PIPER_DEST_DIR"
-    cp -r "$PIPER_SRC_DIR/"* "$PIPER_DEST_DIR/"
-    chmod +x "$PIPER_DEST_DIR/piper"
-else
-    echo "ERROR: Piper executable NOT FOUND at expected path: $PIPER_SRC_DIR/piper."
-    echo "The package WILL NOT contain the TTS engine. Please run the download command first."
-    exit 1 
-fi
-
-# Copy Voices
-echo "Copying voices from $SOURCE_VOICES_DIR to package..."
-# Copy only ONNX and JSON files to keep it clean, but inclusive
-# We verify if the directory exists first
-if [ -d "$SOURCE_VOICES_DIR" ]; then
-    cp "$SOURCE_VOICES_DIR"/*.onnx "$VOICES_DIR/"
-    cp "$SOURCE_VOICES_DIR"/*.json "$VOICES_DIR/"
-else
-    echo "WARNING: Voice source directory not found! Package will be empty of voices."
-fi
-
-# Create Launcher Script
-cat > "$USR_BIN/$APP_NAME" <<EOF
-#!/bin/bash
-exec python3 /usr/share/$APP_NAME/clipspeak.py "\$@"
-EOF
-
-chmod +x "$USR_BIN/$APP_NAME"
-chmod +x "$USR_SHARE/clipspeak.py"
-
-# Build Deb
-echo "Building .deb package (this might take a moment due to file size)..."
-dpkg-deb --build "$DEB_DIR"
-
-echo "Build complete: $BUILD_DIR/$APP_NAME-$VERSION.deb"
+dpkg-deb --root-owner-group --build "$ROOT" "build/${APP}_${VERSION}_all.deb"
+echo "Built: build/${APP}_${VERSION}_all.deb"
