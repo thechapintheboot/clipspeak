@@ -1,95 +1,80 @@
 # ClipSpeak
 
-ClipSpeak is a lightweight Linux utility that speaks the text currently in your clipboard using high-quality local TTS (Text-to-Speech). It sits in your system tray and can be triggered via a menu or a custom keyboard shortcut.
+ClipSpeak is a small Linux tray utility that reads the text you copied aloud with
+natural voices: Google's **Gemini 3.8 Flash TTS**, through [OpenRouter](https://openrouter.ai).
 
-## Features
+- **30 voices**, female and male, switchable from the tray menu in two clicks
+- **Automatic language detection**: copy Italian, English, Japanese… it just reads it
+- **Speed, pitch and style** (calm, warm, narrator, news anchor, teacher, whisper…),
+  plus free-text instructions such as *"with a British accent"*
+- **Keyboard shortcut**: `clipspeak --speak` reads the clipboard; pressed again on the same text, it stops
+- **Long texts** start in about 3 seconds: the text is synthesized in chunks while you listen
+- **Repeat** a reading (instant and free when nothing changed, or with the voice you just picked)
+  and **save** it as a WAV file
+- Reads the **copied** text (Ctrl+C) or simply the **selected** text
+- Italian or English interface
+- No pip packages: Python standard library + the GTK bindings your distribution already ships
 
-- **Clipboard Reading:** Instantly reads text copied to your clipboard.
-- **Auto-Language Detection:** Automatically detects the language of the text (supports EN, IT, FR, DE, ES, ZH, AR, RU, PT).
-- **High-Quality Voices:** Uses [Piper TTS](https://github.com/rhasspy/piper) for natural-sounding offline synthesis.
-- **Speed Control:** Adjustable playback speed via the tray menu.
-- **System Integration:** Works with any desktop environment (GNOME, XFCE, KDE, etc.) via system tray and notifications.
-- **CLI/Shortcut Mode:** Trigger speech without touching the mouse using `clipspeak --speak`.
+## Requirements
+
+- An OpenRouter API key ([openrouter.ai/keys](https://openrouter.ai/keys)) with some credit.
+  Reading costs about **$0.014 per minute of audio** with Gemini 3.8 Flash TTS
+  (Flash Lite is cheaper and starts sooner).
+- A Linux desktop with a system tray (XFCE, Cinnamon, MATE, KDE; GNOME needs the AppIndicator extension).
 
 ## Installation
 
-### Method 1: Easy Installation (.deb package) - Recommended
+### .deb package (Debian, Ubuntu, Linux Mint, LMDE)
 
-The easiest way to install ClipSpeak is using the pre-built `.deb` package, which **includes high-quality voices** and handles dependencies automatically.
-
-1.  Go to the **[Releases Page](https://github.com/thechapintheboot/clipspeak/releases)**.
-2.  Download the latest `clipspeak-x.x.deb` file.
-3.  Double-click the file to install it (or run `sudo dpkg -i clipspeak-x.x.deb`).
-4.  Launch "ClipSpeak" from your applications menu.
-
----
-
-### Method 2: Manual Installation (For Developers)
-
-If you prefer to run from source:
-
-#### Prerequisites
-
-Ensure you have Python 3 and the necessary system libraries:
+Download `clipspeak_2.0_all.deb` from the [Releases page](https://github.com/thechapintheboot/clipspeak/releases), then:
 
 ```bash
-sudo apt update
-sudo apt install python3-pip python3-gi python3-gi-cairo gir1.2-appindicator3-0.1 espeak-ng libportaudio2 alsa-utils
+sudo apt install ./clipspeak_2.0_all.deb
 ```
 
-### Install Python Dependencies
+Start **ClipSpeak** from the applications menu.
+
+### From source
 
 ```bash
-pip install -r requirements.txt
+sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1 gir1.2-notify-0.7 pulseaudio-utils
+python3 clipspeak.py
 ```
 
-### Install Piper TTS Voices
+To build the package yourself: `./build_deb.sh` (creates `build/clipspeak_<version>_all.deb`).
 
-ClipSpeak requires Piper TTS voices to be installed in `~/.local/share/piper-voices`.
-You can download ONNX models and their JSON config files from the [Piper releases](https://github.com/rhasspy/piper/releases) or [Hugging Face](https://huggingface.co/rhasspy/piper-voices/tree/main).
+## API key
 
-Common default models expected by ClipSpeak:
-- `en_US-amy-medium.onnx`
-- `it_IT-paola-medium.onnx`
-- `fr_FR-siwis-medium.onnx`
-- `de_DE-thorsten-medium.onnx`
-- `es_ES-davefx-medium.onnx`
-- ... (see `models.json` in `~/.config/clipspeak` after first run)
+ClipSpeak looks for `OPENROUTER_API_KEY` in this order:
+
+1. `~/.config/clipspeak/openrouter.env`, written by the **Settings** window (permissions 600)
+2. the `OPENROUTER_API_KEY` environment variable
+3. `~/.config/openrouter.env`, a file in `KEY=value` form
 
 ## Usage
 
-1.  **Start the Application:**
-    Run the script:
-    ```bash
-    python3 clipspeak.py
-    ```
-    An icon will appear in your system tray.
+- **Tray menu**: *Read clipboard*, *Stop*, *Repeat*, and submenus for voice, speed, pitch and style.
+  A middle click on the icon also reads the clipboard.
+- **Settings…**: everything in one window, with a **Try** button to hear each voice.
+- **Keyboard shortcut**: in your desktop's keyboard settings, add a custom shortcut with the command
 
-2.  **Speak Clipboard:**
-    -   **Tray Menu:** Click the icon and select "Pronounce (Clipboard)".
-    -   **Shortcut (Recommended):** Setup a global hotkey (see below).
+  ```
+  clipspeak --speak
+  ```
 
-3.  **Change Speed:**
-    Use the "Change Speed" menu to adjust the speech rate (0.5x to 1.5x).
+  (the Settings window shows the exact command when running from source). If ClipSpeak isn't running, the shortcut starts it.
 
-### Setting up a Keyboard Shortcut
+Other commands: `clipspeak --stop`, `--repeat`, `--say "some text"`, `--settings`, `--quit`.
 
-To speak the clipboard content instantly without clicking the icon:
-
-1.  Open your operating system's **Keyboard Settings**.
-2.  Navigate to **Shortcuts** > **Custom Shortcuts**.
-3.  Add a new shortcut:
-    -   **Name:** ClipSpeak
-    -   **Command:** `/path/to/python3 /path/to/clipspeak.py --speak`
-        *(Tip: Use `pwd` to find the full path where you installed it, or if installed globally, just `clipspeak --speak`)*
-4.  Assign your preferred key combination (e.g., `Super+Space` or `Ctrl+Alt+S`).
+Settings are stored in `~/.config/clipspeak/config.json`.
 
 ## Troubleshooting
 
--   **No Sound:** Ensure `aplay` is installed (`sudo apt install alsa-utils`) and your speakers are unmuted.
--   **Missing Voice:** Check the notification for the missing file name and download it to `~/.local/share/piper-voices`.
--   **Dependencies:** If you see errors about `gi`, ensure you installed the system packages (`python3-gi`, etc.) via `apt`, not just `pip`.
+- **No sound**: ClipSpeak plays through `paplay`, `pw-play` or `aplay` (the first one found);
+  install `pulseaudio-utils`, `pipewire-bin` or `alsa-utils`.
+- **"Invalid OpenRouter API key" / "Not enough credit"**: check the key and the credit on openrouter.ai.
+- **No tray icon on GNOME**: install the *AppIndicator and KStatusNotifierItem Support* extension.
 
 ## License
 
-Open Source. Feel free to modify and distribute.
+MIT
